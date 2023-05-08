@@ -1,1 +1,149 @@
+# Импортируем необходимые библиотеки
 
+from aiogram import Bot, Dispatcher, types, executor
+
+from aiogram.types import ReplyKeyboardMarkup
+
+from dotenv import load_dotenv
+
+import os
+
+# Загружаем переменные окружения из файла .env
+
+load_dotenv()
+
+# Создаем объект бота с токеном из переменной окружения TOKEN
+
+bot = Bot(os.getenv("TOKEN"))
+
+# Создаем объект диспетчера для связи с ботом
+
+dp = Dispatcher(bot=bot)
+
+# Создаем объект клавиатуры с четырьмя кнопками: text1, text2, text3 и text4
+
+main = ReplyKeyboardMarkup(resize_keyboard=True)
+
+main.add("text1").add("text2").add("text3").add("text4")
+
+# Создаем объект клавиатуры с пятью кнопками: text1, text2, text3, text4 и text5
+
+main_admin = ReplyKeyboardMarkup(resize_keyboard=True)
+
+main_admin.add("text1").add("text2").add("text3").add("text4").add("text5")
+
+# Создаем объект клавиатуры с двумя кнопками: text(1) и text(2)
+
+admin_panel = ReplyKeyboardMarkup(resize_keyboard=True)
+
+admin_panel.add("text(1)").add("text(2)")
+
+# Определяем функцию для обработки команды /start
+
+@dp.message_handler(commands=["start"])
+
+async def cmd_start(message: types.Message):
+
+    # Отправляем приветственное сообщение с именем пользователя и клавиатурой main
+
+    await message.answer(f"{message.from_user.first_name}, Приветствую ", reply_markup=main)
+
+    # Проверяем, является ли пользователь администратором по его id из переменной окружения ADMIN_ID
+
+    if message.from_user.id == int(os.getenv("ADMIN_ID")):
+
+        # Если да, то отправляем ему дополнительное сообщение с текстом text5 и клавиатурой main_admin
+
+        await message.answer(f'text5', reply_markup=main_admin)
+
+# Определяем функцию для обработки нажатия на кнопку text1
+
+@dp.message_handler(text="text1")
+
+async def hello(message: types.Message):
+
+    # Отправляем сообщение с текстом Привет
+
+    await message.answer("Привет")
+
+# Определяем функцию для обработки нажатия на кнопку text3
+
+@dp.message_handler(text="text3")
+
+async def body(message: types.Message):
+
+    # Отправляем сообщение с инструкцией для пользователя
+
+    await message.answer("Отправьте число1 и число2 через пробел:170 70")
+
+    # Разбиваем текст сообщения пользователя по пробелам и сохраняем в переменную data - список строк
+
+    data = message.text.split()
+
+    # Проверяем, что длина списка data равна 2, то есть пользователь отправил два числа через пробел
+
+    if len(data) != 2:
+
+        # Если нет, то отправляем сообщение с текстом Неверный формат сообщения. Отправьте число1 и число2 через пробел.
+
+        await message.answer("Неверный формат сообщения. Отправьте число1 и число2 через пробел.")
+
+    else:
+
+        # Если да, то пытаемся преобразовать два элемента списка data в числа с плавающей точкой и сохранить в переменные height и weight
+
+        try:
+
+            height = float(data[0])
+
+            weight = float(data[1])
+
+            # Вычисляем значение числа по формуле bmi = weight / (height/100)**2 и сохраняем в переменную bmi
+
+            bmi = weight / (height/100)**2
+
+            # Определяем категорию пользователя по значению числа
+
+            if bmi < 18.5:
+
+                category = 'text1'
+
+            elif 18.5 <= bmi < 25:
+
+            elif 25 <= bmi < 30:
+
+                category = 'text3'
+
+            else:
+
+                category = 'text3'
+
+                # Отправляем сообщение с текстом Ваше число: {bmi:.2f}\nКатегория: {category}, где {bmi:.2f} - это форматированное значение числа с двумя знаками после запятой, а {category} - это определенная категория
+
+            await message.answer(f"Ваше число: {bmi:.2f}\nКатегория: {category}")
+
+        # Если преобразование в числа не удалось, то ловим исключение ValueError
+
+        except ValueError:
+
+            # Отправляем сообщение с текстом Неверный формат чисел. Попробуйте еще раз.
+
+            await message.reply("Неверный формат чисел. Попробуйте еще раз.")
+
+# Определяем функцию для обработки нажатия на кнопку text5
+
+@dp.message_handler(text="text5")
+
+async def admin(message: types.Message):
+
+    # Отправляем сообщение с текстом text5 и клавиатурой admin_panel
+
+    await message.answer(f"text5 ", reply_markup=admin_panel)
+
+# Проверяем, что скрипт запускается как основная программа
+
+if __name__ == "main":
+
+    # Запускаем лонг поллинг для получения обновлений от бота
+
+    executor.start_polling(dp)
